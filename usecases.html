@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Gestion d'Événements - Cas d'Utilisation</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 2rem 0;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 2rem;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            transition: transform 0.3s;
+            border: none;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            position: relative;
+            padding-left: 2rem;
+        }
+        .list-group-item:before {
+            content: "•";
+            position: absolute;
+            left: 1rem;
+            color: #6c757d;
+        }
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+        .actor-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        footer {
+            background-color: #343a40;
+            color: white;
+            padding: 1rem 0;
+            margin-top: 2rem;
+        }
+        .schema-diagram {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            margin: 2rem 0;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Styles pour la fonction de zoom */
+        .zoom-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 30px;
+            padding: 5px 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+        }
+        
+        .zoom-controls button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #495057;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        
+        .zoom-controls button:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .zoom-level {
+            margin: 0 10px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        /* Styles pour la modal de zoom */
+        .modal-fullscreen .modal-dialog {
+            max-width: 95% !important;
+            margin: 1.75rem auto;
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+        }
+        
+        .zoom-modal-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: auto;
+            max-height: 80vh;
+        }
+        
+        .zoomable-image {
+            max-width: none;
+            transform-origin: center center;
+            cursor: move;
+        }
+        
+        .modal-header {
+            border-bottom: none;
+            padding: 1rem 1rem 0;
+        }
+        
+        .modal-footer {
+            border-top: none;
+            justify-content: center;
+            padding: 0 1rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header text-center">
+        <div class="container">
+            <h1 class="display-4">Système de Gestion d'Événements</h1>
+            <p class="lead">Cas d'utilisation par acteur</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">Vue d'ensemble du système</h2>
+                        <p class="card-text">
+                            Ce système permet la gestion complète d'événements, incluant la création d'événements, 
+                            la vente de billets, la gestion des participants et le contrôle d'accès via scan de billets.
+                            Le diagramme de classes ci-dessous montre la structure du système avec ses entités principales.
+                        </p>
+                        <div class="text-center zoom-container">
+                            <img src="Main.jpg" alt="Diagramme de classes du système" class="schema-diagram" id="diagram-image">
+                            <div class="zoom-controls">
+                                <button type="button" id="zoom-in"><i class="fas fa-search-plus"></i></button>
+                                <button type="button" id="zoom-full"><i class="fas fa-expand"></i></button>
+                                <button type="button" id="zoom-out"><i class="fas fa-search-minus"></i></button>
+                            </div>
+                            <p class="text-muted mt-2">Diagramme de classes du système de gestion d'événements <small>(Cliquez sur l'image pour l'agrandir)</small></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour afficher l'image en grand -->
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="imageModalLabel">Diagramme de classes du système</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body zoom-modal-body" id="modal-zoom-container">
+                        <img src="Main.jpg" alt="Diagramme de classes du système" class="zoomable-image" id="modal-image">
+                    </div>
+                    <div class="modal-footer">
+                        <div class="zoom-controls mb-0">
+                            <button type="button" id="modal-zoom-out"><i class="fas fa-search-minus"></i></button>
+                            <span class="zoom-level" id="zoom-percentage">100%</span>
+                            <button type="button" id="modal-zoom-in"><i class="fas fa-search-plus"></i></button>
+                            <button type="button" id="modal-zoom-reset" class="ms-2"><i class="fas fa-sync-alt"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Utilisateur -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <div class="text-center">
+                            <div class="actor-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h3>Utilisateur</h3>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">S'inscrire/Créer un compte</li>
+                        <li class="list-group-item">Se connecter au système</li>
+                        <li class="list-group-item">Modifier son profil personnel</li>
+                        <li class="list-group-item">Acheter un billet</li>
+                        <li class="list-group-item">Consulter ses billets</li>
+                        <li class="list-group-item">Participer à un événement</li>
+                        <li class="list-group-item">Donner un feedback</li>
+                        <li class="list-group-item">Modifier son statut de présence</li>
+                        <li class="list-group-item">Consulter les événements</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Organisateur -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <div class="text-center">
+                            <div class="actor-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <h3>Organisateur</h3>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Créer un événement</li>
+                        <li class="list-group-item">Modifier un événement</li>
+                        <li class="list-group-item">Annuler un événement</li>
+                        <li class="list-group-item">Publier un événement</li>
+                        <li class="list-group-item">Supprimer un événement</li>
+                        <li class="list-group-item">Consulter les statistiques</li>
+                        <li class="list-group-item">Percevoir les paiements</li>
+                        <li class="list-group-item">Gérer les catégories de billets</li>
+                        <li class="list-group-item">Ajuster les prix des billets</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Agent de scan -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-warning text-dark">
+                        <div class="text-center">
+                            <div class="actor-icon">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
+                            <h3>Agent de Scan</h3>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Scanner les billets</li>
+                        <li class="list-group-item">Marquer un billet comme scanné</li>
+                        <li class="list-group-item">Valider un billet</li>
+                        <li class="list-group-item">Consulter les informations d'un billet</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Système -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-info text-white">
+                        <div class="text-center">
+                            <div class="actor-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <h3>Système</h3>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Générer un code QR</li>
+                        <li class="list-group-item">Enregistrer l'historique des scans</li>
+                        <li class="list-group-item">Vérifier la validité des billets</li>
+                        <li class="list-group-item">Traiter les paiements</li>
+                        <li class="list-group-item">Limiter le nombre de billets</li>
+                        <li class="list-group-item">Calculer les moyens de paiement</li>
+                        <li class="list-group-item">Maintenir l'historique</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Use Cases Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="mb-0">Détails des Cas d'Utilisation</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="accordionUseCases">
+                            <!-- Utilisateur -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingOne">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        <i class="fas fa-user me-2"></i> Cas d'utilisation de l'Utilisateur
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionUseCases">
+                                    <div class="accordion-body">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Cas d'utilisation</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>S'inscrire</td>
+                                                    <td>L'utilisateur crée un nouveau compte en fournissant ses informations personnelles</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Se connecter</td>
+                                                    <td>L'utilisateur accède à son compte avec ses identifiants</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Acheter un billet</td>
+                                                    <td>L'utilisateur sélectionne un événement, choisit une catégorie de billet et procède au paiement</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Donner un feedback</td>
+                                                    <td>Après avoir participé à un événement, l'utilisateur peut laisser un commentaire et une note</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Organisateur -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingTwo">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                        <i class="fas fa-calendar-check me-2"></i> Cas d'utilisation de l'Organisateur
+                                    </button>
+                                </h2>
+                                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionUseCases">
+                                    <div class="accordion-body">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Cas d'utilisation</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Créer un événement</td>
+                                                    <td>L'organisateur définit un nouvel événement avec titre, lieu, dates, capacité, etc.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Publier un événement</td>
+                                                    <td>L'organisateur rend l'événement visible pour les utilisateurs</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Créer des catégories de billets</td>
+                                                    <td>L'organisateur définit différentes options de billets avec prix et avantages</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Consulter les statistiques</td>
+                                                    <td>L'organisateur visualise des données sur les ventes et participations</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Agent de scan -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingThree">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                        <i class="fas fa-qrcode me-2"></i> Cas d'utilisation de l'Agent de Scan
+                                    </button>
+                                </h2>
+                                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionUseCases">
+                                    <div class="accordion-body">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Cas d'utilisation</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Scanner les billets</td>
+                                                    <td>L'agent utilise l'application pour scanner le code QR d'un billet</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Valider un billet</td>
+                                                    <td>L'agent confirme la validité d'un billet après vérification</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Marquer comme scanné</td>
+                                                    <td>L'agent enregistre le scan du billet dans le système</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Système -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingFour">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                        <i class="fas fa-cogs me-2"></i> Cas d'utilisation du Système
+                                    </button>
+                                </h2>
+                                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionUseCases">
+                                    <div class="accordion-body">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Cas d'utilisation</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Générer un code QR</td>
+                                                    <td>Le système génère un code QR unique pour chaque billet</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Vérifier la validité</td>
+                                                    <td>Le système contrôle si un billet est valide, non expiré et non déjà utilisé</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Enregistrer l'historique</td>
+                                                    <td>Le système maintient un registre de tous les scans effectués</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Traiter les paiements</td>
+                                                    <td>Le système gère les transactions financières pour l'achat de billets</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-5">
+        <div class="container">
+            <p>Système de Gestion d'Événements &copy; 2025</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialisation des variables
+            let zoomLevel = 1;
+            let modalZoomLevel = 1;
+            let dragStartX, dragStartY, imageX = 0, imageY = 0;
+            let isDragging = false;
+            
+            // Éléments DOM
+            const diagramImage = document.getElementById('diagram-image');
+            const modalImage = document.getElementById('modal-image');
+            const zoomPercentage = document.getElementById('zoom-percentage');
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            const modalZoomContainer = document.getElementById('modal-zoom-container');
+            
+            // Gestionnaires d'événements pour les boutons de zoom sur l'image principale
+            document.getElementById('zoom-in').addEventListener('click', function() {
+                zoomLevel = Math.min(zoomLevel + 0.1, 2);
+                applyZoom(diagramImage, zoomLevel);
+            });
+            
+            document.getElementById('zoom-out').addEventListener('click', function() {
+                zoomLevel = Math.max(zoomLevel - 0.1, 0.5);
+                applyZoom(diagramImage, zoomLevel);
+            });
+            
+            document.getElementById('zoom-full').addEventListener('click', function() {
+                modal.show();
+            });
+            
+            // Gestionnaires d'événements pour les boutons de zoom dans la modal
+            document.getElementById('modal-zoom-in').addEventListener('click', function() {
+                modalZoomLevel = Math.min(modalZoomLevel + 0.2, 3);
+                applyModalZoom();
+                updateZoomPercentage();
+            });
+            
+            document.getElementById('modal-zoom-out').addEventListener('click', function() {
+                modalZoomLevel = Math.max(modalZoomLevel - 0.2, 0.5);
+                applyModalZoom();
+                updateZoomPercentage();
+            });
+            
+            document.getElementById('modal-zoom-reset').addEventListener('click', function() {
+                modalZoomLevel = 1;
+                imageX = 0;
+                imageY = 0;
+                applyModalZoom();
+                updateZoomPercentage();
+            });
+            
+            // Clic sur l'image pour ouvrir la modal
+            diagramImage.addEventListener('click', function() {
+                modal.show();
+                modalZoomLevel = 1;
+                imageX = 0;
+                imageY = 0;
+                applyModalZoom();
+                updateZoomPercentage();
+            });
+            
+            // Gestion du zoom avec la molette de la souris dans la modal
+            modalZoomContainer.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                
+                // Déterminer la direction du zoom
+                if (e.deltaY < 0) {
+                    // Zoom in
+                    modalZoomLevel = Math.min(modalZoomLevel + 0.1, 3);
+                } else {
+                    // Zoom out
+                    modalZoomLevel = Math.max(modalZoomLevel - 0.1, 0.5);
+                }
+                
+                applyModalZoom();
+                updateZoomPercentage();
+            });
+            
+            // Fonctions pour le glisser-déposer de l'image dans la modal
+            modalZoomContainer.addEventListener('mousedown', function(e) {
+                if (modalZoomLevel > 1) {
+                    isDragging = true;
+                    dragStartX = e.clientX - imageX;
+                    dragStartY = e.clientY - imageY;
+                    modalZoomContainer.style.cursor = 'grabbing';
+                }
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    imageX = e.clientX - dragStartX;
+                    imageY = e.clientY - dragStartY;
+                    modalImage.style.transform = `translate(${imageX}px, ${imageY}px) scale(${modalZoomLevel})`;
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    modalZoomContainer.style.cursor = 'move';
+                }
+            });
+            
+            // Fonction pour appliquer le zoom à l'image principale
+            function applyZoom(image, level) {
+                image.style.transform = `scale(${level})`;
+            }
+            
+            // Fonction pour appliquer le zoom à l'image dans la modal
+            function applyModalZoom() {
+                modalImage.style.transform = `translate(${imageX}px, ${imageY}px) scale(${modalZoomLevel})`;
+            }
+            
+            // Fonction pour mettre à jour l'affichage du pourcentage de zoom
+            function updateZoomPercentage() {
+                zoomPercentage.textContent = `${Math.round(modalZoomLevel * 100)}%`;
+            }
+            
+            // Réinitialiser le zoom quand la modal est fermée
+            document.getElementById('imageModal').addEventListener('hidden.bs.modal', function () {
+                modalZoomLevel = 1;
+                imageX = 0;
+                imageY = 0;
+            });
+        });
+    </script>
+</body>
+</html>
